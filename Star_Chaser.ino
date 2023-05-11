@@ -1,7 +1,4 @@
 
-
-
-
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_BMP280.h>
 #include <Adafruit_Sensor.h>
@@ -22,7 +19,12 @@ const int freq = 200;
 
 const int switchPin = 36;
 const int sucsessBeppAmount = 3;
+const int countdownTime = 22; 
 const int beepDelay = 400;
+
+const int relayPin = 12; 
+
+
 
 
 void buzzerNoise(int beepAmount, int beepDelay_){
@@ -31,6 +33,27 @@ void buzzerNoise(int beepAmount, int beepDelay_){
     delay(beepDelay_);
     ledcWrite(pwmChannel, 0);
     delay(beepDelay_);
+  }
+}
+
+void countdown(int contdownTime, int beepDelay, bool print_){
+  int time = countdownTime; // MAKES A CLONE OF THE INPUT VAIRBALE, SO I CAN SUBTRACT FORM THE VARIABLE
+
+  while (time >= 0 and digitalRead(switchPin) == HIGH){ // WHILE TIME IS NOT ZERO AND THE ARM SWITCH IS STILL SWITCHED
+    if (print_ == true){
+      Serial.printf("Countdown: %d \n", time); // PRINTS OUT THE COUNTDOWN TIME
+    }
+
+    if (time <= 9 or time % 10 == 0){ // IF THE NUMBER IS LESS THAN 10 OR 10,20,30,40 OSV
+      buzzerNoise(1, beepDelay ); // BEEPS ONCE
+      delay(1000 - beepDelay*2); // SLEEPS FOR ONE SECOND, MINUS THE TIME IT TOOK FOR THE BEEPER TO BEEP
+
+    }else{
+      delay(1000); // SLEEPS FOR A SECOND
+    }
+
+    time -=1; // SUBTRACTS ONE FROM THE TIME VARIBLE, TO SIGNAL THAT A SECOND HAS GONE BY
+
   }
 }
 
@@ -114,6 +137,7 @@ void setup(void) {
 
   pinMode(buzzerPin, OUTPUT);
   pinMode(switchPin, INPUT);
+  pinMode(relayPin, OUTPUT);
   ledcSetup(pwmChannel, freq, 16);
   ledcAttachPin(buzzerPin, pwmChannel);
 
@@ -130,22 +154,27 @@ void setup(void) {
 
 void loop() {
 
+  Serial.println(digitalRead(switchPin));
 
-if (digitalRead(switchPin) == HIGH){ // IF THE USER ARMS THE ROCKET
-  buzzerNoise(sucsessBeppAmount, beepDelay); //MAKES THE ARM NOISE
+  if (digitalRead(switchPin) == HIGH){ // IF THE USER ARMS THE ROCKET
+    buzzerNoise(sucsessBeppAmount, beepDelay); //MAKES THE ARM NOISE
+    delay(500); 
 
-  while (digitalRead(switchPin) == HIGH){ // LOOPS WHILE THE ROCKET IS ARMED
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
+    countdown(countdownTime, beepDelay, true); // MAKES THE COUNTDOWN TIMER
+    appendFile(SD, "/data.txt", "a.acceleration.x,a.acceleration.y,a.acceleration.z,g.gyro.x,g.gyro.y,g.gyro.z,temp1,temp2,pressure,altitude"); // APPENDS THE SEPERATOR TO THE CSV FILE
 
-    String data = createDataString(a, g, temp, bmp); // RETURNS A STRING, CONTAINING THE SENSOR DATA IN CSV FORM
-    appendFile(SD, "/data.txt", data.c_str()); // APPENDS THE DATA TO THE SD CARD
+    digitalWrite(relayPin, HIGH); // SWITCHES ON THE RELAY, TO START THE ROCKET MOTOR
+    while (digitalRead(switchPin) == HIGH){ // LOOPS WHILE THE ROCKET IS ARMED
+      sensors_event_t a, g, temp;
+      mpu.getEvent(&a, &g, &temp);
 
-    delay(50); // A BIT OF DELAY
+      String data = createDataString(a, g, temp, bmp); // RETURNS A STRING, CONTAINING THE SENSOR DATA IN CSV FORM
+      //appendFile(SD, "/data.txt", data.c_str()); // APPENDS THE DATA TO THE SD CARD
+
+      delay(50); // A BIT OF DELAY
+
+    }
+    digitalWrite(relayPin, LOW); // OPENS THE RELAY
 
   }
-
-}
-  
-
 }
