@@ -6,23 +6,40 @@
 
 #include "SPI.h"
 #include "FS.h"
-#include "SD.h"
+#include <SD.h>
+
+
 
 Adafruit_MPU6050 mpu;
 Adafruit_BMP280 bmp; 
 
-#define SEALEVELPRESSURE_HPA (1013.25) // SETS THE GROUND LEVEL PRESSURE, TO CALCULATE HEIGHT
+#define SEALEVELPRESSURE_HPA (1026.50) // SETS THE GROUND LEVEL PRESSURE, TO CALCULATE HEIGHT
 
 const int buzzerPin = 13;
 const int pwmChannel = 0;
 const int freq = 200;
 
+
 const int switchPin = 36;
 const int sucsessBeppAmount = 3;
-const int countdownTime = 22; 
 const int beepDelay = 400;
 
 const int relayPin = 12; 
+const int countdownTime = 5;
+
+const int servoPin = 32;  
+const int minPulseWidth = 2700; // Minimum pulse width for most servos (in microseconds)
+const int maxPulseWidth = 8000; // Maximum pulse width for most servos (in microseconds)
+const int servoFrequency = 50; // Servo control frequency (50 Hz)
+const int servoChannel = 1; // PWM channel for the servo (can be any channel from 0 to 15)
+
+//const int minPul  seWidth = 1900; // Minimum pulse width for most servos (in microseconds)
+//const int maxPulseWidth = 5150; // Maximum pulse width for most servos (in microseconds)
+
+const int heightArrLen = 5; // SETS THE LENGTH OF THE HEIGHT ARRAY, IF ALL OF THE VALUES IN THE HEIGHT ARRAY IS DECREASING, SHULD THE PARACHUTE RELEASE
+int latestHeight[heightArrLen] = {0, 0, 0, 0, 0}; // INITIALIZES THE LATEST HEIGHT ARRAY, FOR RELEASING THE PARACHUTE
+int maxAltitude; // KEEPS TRACK OF THE MAX ALTITUDE
+
 
 
 
@@ -37,7 +54,7 @@ void buzzerNoise(int beepAmount, int beepDelay_){
 }
 
 void countdown(int contdownTime, int beepDelay, bool print_){
-  int time = countdownTime; // MAKES A CLONE OF THE INPUT VAIRBALE, SO I CAN SUBTRACT FORM THE VARIABLE
+  int time = contdownTime; // MAKES A CLONE OF THE INPUT VAIRBALE, SO I CAN SUBTRACT FORM THE VARIABLE
 
   while (time >= 0 and digitalRead(switchPin) == HIGH){ // WHILE TIME IS NOT ZERO AND THE ARM SWITCH IS STILL SWITCHED
     if (print_ == true){
@@ -58,6 +75,16 @@ void countdown(int contdownTime, int beepDelay, bool print_){
 }
 
 void init(Adafruit_MPU6050& mpuRef, Adafruit_BMP280& bmpRef){
+
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(relayPin, OUTPUT);
+  pinMode(switchPin, INPUT);
+  ledcSetup(pwmChannel, freq, 16);
+  ledcAttachPin(buzzerPin, pwmChannel);
+
+  ledcSetup(servoChannel, servoFrequency, 16);
+  ledcAttachPin(servoPin, servoChannel);
+
   if (!mpuRef.begin()) { // CHECKS IF THE SENSOR IS NOT READY
     while (1) {  // GETS STUCK IN A WHILE LOOP
       Serial.println("Failed to find MPU6050 chip"); // PRINTS OUT THE ERROR  
@@ -90,7 +117,6 @@ void init(Adafruit_MPU6050& mpuRef, Adafruit_BMP280& bmpRef){
 }
 
 void appendFile(fs::FS &fs, const char * path, const char * message){
-    Serial.printf("Appending to file: %s\n", path);
 
     File file = fs.open(path, FILE_APPEND);
     if(!file){
@@ -98,9 +124,9 @@ void appendFile(fs::FS &fs, const char * path, const char * message){
         return;
     }
     if(file.print(message)){
-        Serial.println("Message appended");
+        1+1;
     } else {
-        Serial.println("Append failed");
+        Serial.printf("Failed to append message: %d \n", message);
     }
     file.close();
 }
@@ -124,6 +150,33 @@ String createDataString(sensors_event_t &a, sensors_event_t &g, sensors_event_t 
 }
 
 
+void servoPos(int pos){ 
+    int pulseWidth = map(pos, 0, 180, minPulseWidth, maxPulseWidth);
+    ledcWrite(servoChannel, pulseWidth);
+}
+
+
+void pushFirstIndexArr(int* array, int newValue, int arrLen){
+  for (int i=0; i<arrLen-1; i++){ // LOOPS THE SAME AMOUNT OF TIMES AS THE LENGTH OF THE ARRAY -1
+    array[i+1] = array[i]; // SETS THE FIRST ARRAY POSITION TO BE THE SECOND, AND THE SECOND TO THIRD AND SO ON
+  } 
+  array[0] = newValue; // SETS THE FIRST INDEX TO BE THE NEW VALUE
+}
+
+bool checkReleaseParachute(int* latestHeightArr, int arrLen, int maxAltitude){
+
+  if (maxAltitude > 10 and latestHeightArr[0] < 13){ // IF THE ROCKET HAS FLOWN HEIGHER THAN 10 METERS AND IS LESS THAN 13 METERS
+    return true; // RELEASE THE PARACHUTE
+  }
+
+  for (int i=0; i<arrLen-1; i++){ // LOOPS OVER ALL OF THE ITEMS IN latestHeightArr
+    if (latestHeightArr[i] <= latestHeightArr[i+1]) { // IF TWO NEIGBORING latestHeightArr IS IS NOT DECREASING ALTITUDE
+      return false; // DONT RELEASE THE PARACHUTE
+      }
+    }
+  return true; // IF THE ROCKET IS DECREASING ALTITUDE, THEN RELEASE THE PARACHTUE
+}
+
 
 void setup(void) {
   Serial.begin(9600);
@@ -135,27 +188,18 @@ void setup(void) {
       return;
   }
 
-  pinMode(buzzerPin, OUTPUT);
-  pinMode(switchPin, INPUT);
-  pinMode(relayPin, OUTPUT);
-  ledcSetup(pwmChannel, freq, 16);
-  ledcAttachPin(buzzerPin, pwmChannel);
-
-
-
-  init(mpu, bmp); // CHECKS IF THERE IS ANY ERRORS
-
+  init(mpu, bmp); // CHECKS IF THERE IS ANY ERRORS, AND SETS UP ALL OF THE PINS
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G); // SETS THE ACCELEROMETER RANGE TO +-8G
   mpu.setGyroRange(MPU6050_RANGE_500_DEG); // SETS THE GYROSCORE RANGE TO +-500 DEGREES PER SECOND
   mpu.setFilterBandwidth(MPU6050_BAND_5_HZ); // SETS THE LINE BANDWITDH TO 5HZ
+
+  Serial.printf("Ground Level Pressure: %f \n", bmp.readPressure() / 100.0F);
+  servoPos(100); // LOCKS THE SERVO, TO MAKE SURE THE PARACHUE HATCH IS CLOSED
   delay(100);
 }
-
-
 void loop() {
 
-  Serial.println(digitalRead(switchPin));
-
+ 
   if (digitalRead(switchPin) == HIGH){ // IF THE USER ARMS THE ROCKET
     buzzerNoise(sucsessBeppAmount, beepDelay); //MAKES THE ARM NOISE
     delay(500); 
@@ -163,15 +207,40 @@ void loop() {
     countdown(countdownTime, beepDelay, true); // MAKES THE COUNTDOWN TIMER
     appendFile(SD, "/data.txt", "a.acceleration.x,a.acceleration.y,a.acceleration.z,g.gyro.x,g.gyro.y,g.gyro.z,temp1,temp2,pressure,altitude"); // APPENDS THE SEPERATOR TO THE CSV FILE
 
+
     digitalWrite(relayPin, HIGH); // SWITCHES ON THE RELAY, TO START THE ROCKET MOTOR
     while (digitalRead(switchPin) == HIGH){ // LOOPS WHILE THE ROCKET IS ARMED
       sensors_event_t a, g, temp;
       mpu.getEvent(&a, &g, &temp);
 
       String data = createDataString(a, g, temp, bmp); // RETURNS A STRING, CONTAINING THE SENSOR DATA IN CSV FORM
-      //appendFile(SD, "/data.txt", data.c_str()); // APPENDS THE DATA TO THE SD CARD
+      appendFile(SD, "/data.txt", data.c_str()); // APPENDS THE DATA TO THE SD CARD
 
-      delay(50); // A BIT OF DELAY
+      int altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA); // GETS THE CURRENT ALTITUDE
+      pushFirstIndexArr(latestHeight, altitude, heightArrLen); // ADDS THE CURRENT HEIGHT TO THE FIRST INDEX OF THE latestHeight ARRAY
+      bool releasePar = checkReleaseParachute(latestHeight, heightArrLen, maxAltitude); // FIGURES OUT IF THE PARACHUTE SHULD BE RELEASED
+
+      if (releasePar == true){ // IF THE PARACHUTE SHULD BE RELEASED
+        servoPos(0); // OPENS THE SERVO, TO RELEASE THE PARACHUTE
+      }
+  
+      if (altitude > maxAltitude){ // IF THE CURRENT ALTITUDE IS GREATER THAN THE MAX ALTITUDE
+        maxAltitude = altitude; // SETS THE NEW MAX ALITTUDE
+      }
+/*
+      Serial.print("[");
+      for (int i = 0; i < heightArrLen; i++) {
+          Serial.print(latestHeight[i]);
+          if (i < heightArrLen - 1) {
+              Serial.print(", ");
+          }
+      }
+      Serial.println("]");*/
+
+
+      //delay(1000); // A BIT OF DELAY
+
+
 
     }
     digitalWrite(relayPin, LOW); // OPENS THE RELAY
