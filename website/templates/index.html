@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starlight Pioneer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <audio id="mySoundEffect" src="{{ url_for('static', filename='soundEffects/alarm.mp3') }}"></audio>
+    <div class="launch-time" id="launchedTime" style="display: none;">Launched time: 1 min</div>
+
+    <div class="container">
+        <h1>Starlight Pioneer</h1>
+
+        <div class="status" id="status-container">
+            <p class='error'>camera Error</p>
+            <p class='error'>datalogging: Error</p>
+        </div>
+
+        <form method="post">
+            <div class="buttons">
+                <button id="launch" name="action" value="launch" onclick="startTimer()">Launch</button>
+                <button id="abort" name="action" value="abort">Abort</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="countdown" id="countdown-timer-container" style="display: none;">
+        <h2>Countdown to Launch</h2>
+        <p id="countdown-timer">00:00</p>
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Ensures elements are stacked vertically */
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px; /* Adds some space between the main box and the countdown */
+}
+
+    h1 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .status p {
+        font-size: 18px;
+        margin: 10px 0;
+    }
+
+    .success {
+        color: green;
+    }
+
+    .error {
+        color: red;
+    }
+
+    .buttons button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .buttons button:hover {
+        background-color: #0056b3;
+    }
+
+    .launch-time {
+
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 16px;
+        color: #333;
+        padding: 5px 10px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+
+
+    .countdown {
+        text-align: center;
+        margin-top: 30px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 300px; /* Adjust the width as needed */
+    }
+    
+    .countdown h2 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .countdown p {
+        font-size: 24px;
+        color: #007bff;
+        margin: 0;
+        font-weight: bold;
+    }
