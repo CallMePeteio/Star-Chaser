@@ -44,53 +44,70 @@ gpio.setup(constants.rocketMosfetPin, gpio.OUT)
 
 
 def launchLogic(dataDict):
-	while True:
+	abort = False
+	while abort == False:
+		time.sleep(1)
 		gpio.output(constants.rocketMosfetPin, gpio.LOW)
 		status = func.readJson(constants.statusJsonPath, constants.lock)
 		if status != None:
 			start = status["launch"]
 			if start == True:
-				print("Starting countdown!")
 
+
+
+				func.print_("Starting countdown!", dataDict)
 				countDownTime = status["countDownTime"]
 				for i in range(countDownTime, 0, -1): # LOOPS IN REVERSE (counts down)
 					if i <= 10: 
-						print(f"Launch countdown: {i}")
+						func.print_(f"Launch countdown: {i}", dataDict)
+					
 					time.sleep(1)
+		
+					status = func.readJson(constants.statusJsonPath, constants.lock)
+					if status != None:
+						start = status["launch"]
+						if start == False:
+							func.print_("Stopping coundown!", dataDict)
+							abort = True
+							break
+
+
+					
 
 
 
 
-
-				if not None in dataDict.values() and "altitude" in dataDict and "time" in dataDict: # CHECKS IF WE ARE GETTING VALUES TO DETERMEN WHEN THE PARACHUTE SHULD LAUNCH
-					maxHeight = 0
-					gpio.output(constants.rocketMosfetPin, gpio.HIGH) # OPENS THE MOSFET THAT SHOOTS THE ROCKET
+				if abort == False: # IF THE FLIGHT WAS ABORTED
+					if not None in dataDict.values() and "altitude" in dataDict and "time" in dataDict: # CHECKS IF WE ARE GETTING VALUES TO DETERMEN WHEN THE PARACHUTE SHULD LAUNCH
+						maxHeight = 0
+						gpio.output(constants.rocketMosfetPin, gpio.HIGH) # OPENS THE MOSFET THAT SHOOTS THE ROCKET
 									
-					while True:
+						while True:
 					
 						
-						alt = dataDict["altitude"]
-						launchTime = dataDict["time"] - countDownTime
+							alt = dataDict["altitude"]
+							launchTime = dataDict["time"] - countDownTime
 						
-						if alt > maxHeight:
-							maxHeight = alt
+							if alt > maxHeight:
+								maxHeight = alt
 
-						if maxHeight >= constants.openShuteHeight[0] and alt <= constants.openShuteHeight[1]:
-							servoNum = func.convertDeg(0) 
-							servo.value = servoNum # OPENS THE SERVO
-							print(f"Opened the Shute based on altitude: {alt}")							
+							if maxHeight >= constants.openShuteHeight[0] and alt <= constants.openShuteHeight[1]:
+								servoNum = func.convertDeg(0) 
+								servo.value = servoNum # OPENS THE SERVO
+								func.print_(f"Opened the Shute based on altitude: {alt}", dataDict)							
 
-						elif launchTime >= constants.openShuteTime:
-							servoNum = func.convertDeg(0)
-							servo.value = servoNum # OPENS THE SERVO
-							print(f"\n Opened the Shute based on Time: {launchTime}")
-							print(alt, launchTime)				 
+							elif launchTime >= constants.openShuteTime:
+								servoNum = func.convertDeg(0)
+								servo.value = servoNum # OPENS THE SERVO
+								func.print_(f"\n Opened the Shute based on Time: {launchTime}", dataDict)
+								print(alt, launchTime)				 
 							
-							time.sleep(10)
+								time.sleep(10)
+					else:
+						func.print_(" \n There was an error with the dataDict!", dataDict)
+						func.print_("Retrying Launch!", dataDict)
+						func.print_(f"{dataDict} \n", dataDict)
 				else:
-					print(" \n There was an error with the dataDict!")
-					print("Retrying Launch!")
-					print(f"{dataDict} \n")
+					func.print("Launch aborted!", dataDict)
 						
-	
-		time.sleep(1)
+

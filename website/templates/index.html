@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <a href="/downloads" class="download-link">
+        <img src="{{ url_for('static', filename='img/download.png') }}" alt="Download" />
+        <span class="tooltip">Download Videos</span> <!-- Tooltip text -->
+    </a>
+
     <audio id="mySoundEffect" src="{{ url_for('static', filename='soundEffects/alarm.mp3') }}"></audio>
     <div class="launch-time" id="launchedTime" style="display: none;">Launched time: 1 min</div>
 

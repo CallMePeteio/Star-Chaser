@@ -1,4 +1,6 @@
+from flask import send_from_directory
 from flask import render_template
+from flask import jsonify
 from flask import request
 from flask import abort
 from flask import Flask
@@ -7,6 +9,7 @@ import constants
 import logging
 import json
 import time
+import cv2
 import os
 
 app = Flask(__name__)
@@ -77,7 +80,6 @@ def home():
     return render_template("index.html")
 
 
-
 @app.route("/status", methods=["GET"])
 def status():
     currentStatus = readJson(constants.statusJsonPath)
@@ -96,22 +98,52 @@ def status():
 
 
 
+
+
+#--------------------------------- DOWNLOADS PAGE 
+@app.route('/downloads', methods=["POST", "GET"])
+def downloads():
+
+    return render_template("downloads.html")
+
+
+@app.route("/editVideos/<name>/<type_>")
+def editVideos(name, type_):
+    filePath = constants.videoFolderPath + "/" + name
+
+    if os.path.exists(filePath):
+        if type_ == "delete":
+            os.remove(filePath)
+            return jsonify({"message": "Accepted"}), 202
+        
+        elif type_ == "download":
+            return send_from_directory(constants.videoFolderPath, name, as_attachment=True)
+        
+        else:
+            print("\n ERROR: Invalid type inputed \n")
+            return abort(500)
+    else:
+        print("\n ERROR: Invalid name inputed \n")
+        return abort(500)
+
+@app.route('/downloadPaths', methods=["POST", "GET"])
+def downloadPaths():
+
+    if os.path.exists(constants.videoFolderPath):
+        files = os.listdir(constants.videoFolderPath)
+
+        videoSizes = []
+        for fileName in files:
+            videoSizeMB = os.path.getsize(constants.videoFolderPath + "/" + fileName) / (1024 * 1024)
+            videoSizes.append(round(videoSizeMB, 2))
+
+        return json.dumps(list(zip(files, videoSizes)))
+
+    else:
+        print("\n ERROR: videoFolderPath is incorrect: {constants.videoFolderPath} \n") 
+        return abort(500)
+
+
 app.run(debug=True, host="0.0.0.0")
 
 
-
-
-
-"""
-{
-    "launch": false,
-    "startTime": 1703252392.8258853,
-    "status": {
-        "camera": false,
-        "datalogging": false
-    }
-}
-
-
-
-"""

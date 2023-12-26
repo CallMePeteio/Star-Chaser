@@ -13,7 +13,7 @@ let startTime = 0;
 
 async function getStatus() {
     try {
-        const response = await fetch('http://192.168.10.19:5000//status');
+        const response = await fetch('http://192.168.10.188:5000//status');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }

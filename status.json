@@ -1,9 +1,9 @@
 {
-    "countDownTime": 30,
-    "launch": true,
-    "startTime": 1703352717.317671,
+    "countDownTime": 60,
+    "launch": false,
+    "startTime": 1703252392.8258853,
     "status": {
-        "camera": true,
-        "datalogging": true
+        "camera": false,
+        "datalogging": false
     }
 }

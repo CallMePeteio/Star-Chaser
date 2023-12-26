@@ -50,6 +50,8 @@ body {
         background-color: #0056b3;
     }
 
+
+
     .launch-time {
 
         position: absolute;
@@ -66,6 +68,62 @@ body {
 
 
 
+
+/* DOWNLOAD LINK*/
+
+    .download-link {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        display: block;
+        width: 30px; /* Slightly larger for visibility */
+        height: 30px; /* Keep it proportional */
+        transition: transform 0.3s ease; /* Smooth transition for hover effect */
+        cursor: pointer; /* Indicates that the icon is clickable */
+    }
+    
+    .download-link img {
+        width: 100%;
+        height: auto;
+        transition: opacity 0.3s ease; /* Smooth transition for the opacity */
+    }
+    
+    .download-link:hover {
+        transform: scale(1.1); /* Slightly enlarge icon on hover */
+    }
+    
+    .download-link:hover img {
+        opacity: 0.7; /* Slightly reduce the opacity on hover */
+    }
+    
+    .tooltip {
+        position: absolute;
+        top: 0px;
+        right: 50px; /* Adjust based on the size of the tooltip */
+        visibility: hidden;
+        background-color: white;
+        color: black;
+        text-align: center;
+        padding: 5px 10px;
+        border-radius: 6px;
+        z-index: 1;
+        font-size: smaller;
+
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+        /*outline: 8px ridge rgba(170, 50, 220, .6);
+        border-radius: 1rem;*/
+    }
+
+    .download-link:hover .tooltip {
+        visibility: visible; /* Show tooltip on hover */
+    }
+
+
+
+/* COUNTDOWN */
+
     .countdown {
         text-align: center;
         margin-top: 30px;
@@ -75,7 +133,7 @@ body {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         width: 300px; /* Adjust the width as needed */
     }
-    
+  
     .countdown h2 {
         color: #333;
         margin-bottom: 15px;

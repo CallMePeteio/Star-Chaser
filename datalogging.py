@@ -34,13 +34,13 @@ def startLogging(dataDict):
 					for i, (key, _) in enumerate(dataDict.items()): # LOOPS OVER ALL OF THE DIFFRENT KEYS IN THE DICT
 						dataDict[key] = dataList[i]
 				else:
-					print("\n Datalist and dataDict does not have the equal amount of items \n") 
+					func.print_("\n Datalist and dataDict does not have the equal amount of items", dataDict) 
 				
 				writer.writerow(dataDict)
 
 		
 
-		print(f"Sucsessfully logged data: {totalLoggings}")
+		func.print_(f"Sucsessfully logged data: {totalLoggings}", dataDict)
 		
 		status = func.readJson(constants.statusJsonPath, constants.lock)
 		if status["launch"] == False:

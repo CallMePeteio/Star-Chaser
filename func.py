@@ -4,6 +4,7 @@ import json
 import time 
 import cv2
 
+
 def readJson(path, lock):
 	for i in range(10):
 		try:
@@ -50,4 +51,33 @@ def updateJsonValue(jsonPath, keyPath, newValue, lock, json_data=None):
     writeJson(jsonPath, json_data, lock)
 
 
+def print_(message, dataDict):
+	time = dataDict["time"]
+	if time != None:
+		time = round(time, 2)
+		
+	
+	manySpaces = constants.timePrintPlacment - len(message)
+	if manySpaces > 0:
+		for i in range(manySpaces):
+			message += "_"
+		message += str(time)	
+	
+	else:
+		messsge = f"{message}__________{time}"
+
+	
+	message = "\n " + message
+	for i in range(10):
+		try: 
+			with open(constants.logFilePath,'a+') as f:
+				f.write(message)
+				print(message)
+				return
+		except:
+			pass
+
+
+
 convertDeg = lambda deg: (deg - 90) / 90 # CONVERTS THE ANGLE TO SERVO VALUE (-1 TO 1)
+

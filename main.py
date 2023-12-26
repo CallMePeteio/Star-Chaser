@@ -13,13 +13,15 @@ import os
 dataDict = {'time': None, 'altitude': None, 'atmoPressure': None, "temp": None, "accelerationX": None, "accelerationY": None, "accelerationZ": None, "gyroX": None, "gyroY": None, "gyroZ": None} 
 
 def startModules():
+	
+	func.print_("\n \n ----------------------------------------- Launch Start!  ----------------------------------------- \n \n", dataDict)
 
 	import datalogging
 	import camera	
 
-	print("Starting Threads!")
+	func.print_("Starting Threads!", dataDict)
 	threading.Thread(target=datalogging.startLogging, args=(dataDict,)).start()
-	threading.Thread(target=camera.startRecording, args=()).start()
+	threading.Thread(target=camera.startRecording, args=(dataDict,)).start()
 	threading.Thread(target=launch.launchLogic, args=(dataDict,)).start()
 	
 	
@@ -38,7 +40,7 @@ def checkStartModules():
 					time.sleep(1)
 	
 
-			print("checked")
+			func.print_("checked", dataDict)
 			time.sleep(1)
 
 
